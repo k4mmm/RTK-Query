@@ -1,33 +1,42 @@
-import { useSelector, useDispatch } from "react-redux";
-import { useEffect } from "react";
+import { useSelector } from "react-redux";
 import { ButtonDelete, ContactItem, List } from "./ContactList.styled";
-import { getVisibleContacts, getIsLoading } from "../../Redux/selectors";
-import { fetchContacts, deleteContact } from "../../Redux/contactsOperations";
+import {
+  useFetchContactsQuery,
+  useDeleteContactMutation,
+} from "../../Redux/contactsApi";
+import { getFilter } from "../../Redux/selectors";
 
 export default function ContactList() {
-  const dispatch = useDispatch();
-  const visibleContacts = useSelector(getVisibleContacts);
-  const isLoading = useSelector(getIsLoading);
-  useEffect(() => dispatch(fetchContacts()), [dispatch]);
+  const { data, isFetching, isError } = useFetchContactsQuery();
+  const [deleteContact] = useDeleteContactMutation();
+  const filter = useSelector(getFilter);
+
+  const visibleContacts = () => {
+    const normalizedFilter = filter.toLowerCase();
+    return data.filter((item) =>
+      item.name.toLowerCase().includes(normalizedFilter)
+    );
+  };
 
   return (
     <List>
-      {isLoading && <p>Loading...</p>}
-      {visibleContacts.map((contact) => {
-        return (
-          <ContactItem key={contact.id}>
-            {contact.name} : {contact.number}
-            <ButtonDelete
-              type="submit"
-              onClick={() => {
-                dispatch(deleteContact(contact.id));
-              }}
-            >
-              Delete
-            </ButtonDelete>
-          </ContactItem>
-        );
-      })}
+      {isError && <p>Упс, что то пошло не так</p>}
+      {isFetching && <p>Loading...</p>}
+      {data &&
+        !isFetching &&
+        visibleContacts().map((contact) => {
+          return (
+            <ContactItem key={contact.id}>
+              {contact.name} : {contact.number}
+              <ButtonDelete
+                type="submit"
+                onClick={() => deleteContact(contact.id)}
+              >
+                Delete
+              </ButtonDelete>
+            </ContactItem>
+          );
+        })}
     </List>
   );
 }

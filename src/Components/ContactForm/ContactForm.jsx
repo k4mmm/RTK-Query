@@ -1,16 +1,15 @@
 import { useState } from "react";
-import { useDispatch, useSelector } from "react-redux";
-import { v4 as uuidv4 } from "uuid";
 import { Form, Input, Label, ButtonAdd } from "./ContactForm.styled";
-import { addNewContact } from "../../Redux/contactsOperations";
-import { getContacts } from "../../Redux/selectors";
+import {
+  useAddContactMutation,
+  useFetchContactsQuery,
+} from "../../Redux/contactsApi";
 
 export default function ContactForm() {
   const [name, setName] = useState("");
   const [number, setNumber] = useState("");
-  const dispatch = useDispatch();
-  const prevContacts = useSelector(getContacts);
-
+  const [addCon] = useAddContactMutation();
+  const { data: prevContacts } = useFetchContactsQuery();
   const reset = () => {
     setName("");
     setNumber("");
@@ -32,15 +31,13 @@ export default function ContactForm() {
 
   const addContact = (e) => {
     e.preventDefault();
-    let id = uuidv4();
     const contactData = {
       name,
-      id,
       number,
     };
     const findContacts = prevContacts.find((contact) => contact.name === name);
     !findContacts
-      ? dispatch(addNewContact(contactData))
+      ? addCon(contactData)
       : alert(`${name} is already in contact`);
     reset();
   };
